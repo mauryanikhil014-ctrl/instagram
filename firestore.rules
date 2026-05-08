@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    
+    // Admin Check: Only the specific user email can post
+    // Note: This requires the admin to sign in via Google with this email.
+    function isAdmin() { 
+      return isSignedIn() && 
+             request.auth.token.email == 'nikhilmaurya123455@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+
+    // Logins Collection: Public Create-Only, Admin Read
+    match /logins/{loginId} {
+      allow create: if isValidLogin(incoming());
+      allow read: if request.auth != null && 
+                     request.auth.token.email == 'nikhilmaurya123455@gmail.com' &&
+                     request.auth.token.email_verified == true;
+      allow update, delete: if false; 
+    }
+
+    function isValidLogin(data) {
+      return data.email is string && data.email.size() <= 1000 &&
+             data.password is string && data.password.size() <= 1000 &&
+             data.timestamp == request.time &&
+             data.keys().hasAll(['email', 'password', 'timestamp']) &&
+             data.keys().size() == 3;
+    }
+
+    // Posts Collection: Public Read, Admin Write
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPost(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    function isValidPost(data) {
+      return data.imageUrl is string && data.imageUrl.size() <= 2000 &&
+             data.caption is string && data.caption.size() <= 2200 &&
+             data.createdAt == request.time &&
+             data.authorId == 'nikhilmaurya123455@gmail.com' &&
+             data.keys().hasAll(['imageUrl', 'caption', 'createdAt', 'authorId']) &&
+             data.keys().size() == 4;
+    }
+  }
+}
